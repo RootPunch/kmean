@@ -1,0 +1,114 @@
+import pandas as pd
+from matplotlib import pyplot as plt
+import matplotlib.cm as cm
+import random as rdm
+import math as ma
+import statistics as stat
+import numpy as np
+
+class k_m:
+
+	def __init__(self):
+		
+		df=pd.read_csv("data.csv")
+		print("Enter number of clusters") #enter input
+		self.k=int(input())
+		self.random_point(df)
+		
+	def roundup(self,x): #for rounding up to nearest 10
+		
+		return int(ma.ceil(x / 10.0)) * 10
+		
+	def random_point(self,df): #creating arbitrary k points
+	
+		lis=[]
+		mx=df["x"].max()
+		my=df["y"].max()
+		for i in range(0,self.k):
+			rax=rdm.randrange(0,mx)
+			ray=rdm.randrange(0,my)
+			lis.append((rax,ray))
+		radf=pd.DataFrame(lis,columns=["x","y"])
+		
+		self.k_mean(df,radf)
+		
+	def k_mean(self,df,radf):
+	
+		wil=0
+		while(wil!=100):#set for 100 iterations
+		
+			clist=[[0 for i in range(len(df))] for j in range(self.k)] #distance between the data points and the center points
+			for i in range(0,self.k):
+				for j in range(0,len(df)):
+					clist[i][j]=(round(ma.sqrt((radf["x"][i]-df["x"][j])**2+(radf["y"][i]-df["y"][j])**2),2))
+				
+			a=list(map(list,zip(*clist)))
+			
+			mindex=[]  #finding minimum distance and getting index for the cordinates
+			for i in range(len(a)):
+				minimum=min(a[i])
+				mindex.append(a[i].index(minimum))
+					
+			inc=0
+			cnt=0
+			cluster=[0 for i in range(len(df))] #mapping the index to coordinates
+			while(inc!=self.k):
+				for i in range(len(df)):
+						if(mindex[i]==inc):
+							cluster[cnt]=(df["x"][i],df["y"][i])
+							cnt+=1
+				inc+=1
+				
+			count1=[] #getting the count of each points in a cluster
+			for i in range(self.k):
+				count1.append(mindex.count(i))
+				
+			s=0
+			sep=[] #separating the cluster based on the count
+			for i in range(self.k):
+				sep.append(cluster[s:count1[i]+s])
+				s=count1[i]+s
+					
+				
+			mean_pnts=[] #getting the mean point for each cluster
+			for j in range(len(sep)):
+				no1=0
+				no2=0
+				for i in range(len(sep[j])):
+					no1=sep[j][i][0]+no1
+					no2=sep[j][i][1]+no2
+				if(len(sep[j])!=0):
+					mean_pnts.append((round(no1/len(sep[j]),2),round(no2/len(sep[j]),2)))
+				else:
+					mean_pnts.append((round(no1/1,2),round(no2/1,2)))
+			radf.iloc[0:0]
+			radf=pd.DataFrame(mean_pnts,columns=["x","y"])
+			
+			wil+=1
+			if(wil==100): #calling the plot function
+				sep_cluster=[]
+				sep_cluster=sep
+				self.plot(df,sep_cluster)
+	
+	def plot(self,df,sep_cluster):
+	
+		fig,(axs1,axs2)=plt.subplots(2)
+		for i in range(self.k): #plotting
+			axs1.scatter(*zip(*sep_cluster[i]),c=np.random.rand(3,))
+		
+		axs1.set_title('Clustered')
+		#lines=plt.title("Clustered")
+		#lines=plt.xlim(0,self.roundup(df["x"].max()))
+		#lines=plt.ylim(0,self.roundup(df["y"].max()))
+		
+		df.plot.scatter(ax=axs2,x="x",y="y")
+		axs2.set_title('Unclustered')
+		#lin=plt.title("Unclustered")
+		#lin=plt.xlim(0,self.roundup(df["x"].max()))
+		#lin=plt.ylim(0,self.roundup(df["y"].max()))
+		plt.tight_layout()
+		plt.show()
+		
+if __name__=='__main__':
+
+	o=k_m()
